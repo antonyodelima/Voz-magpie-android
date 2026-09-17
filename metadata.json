@@ -1,0 +1,8 @@
+{
+  "name": "Vozo Magpie Studio",
+  "description": "Vozo Magpie Voice Studio Android application featuring rich webview voice lab integration",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

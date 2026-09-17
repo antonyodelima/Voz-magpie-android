@@ -1,0 +1,8 @@
+<resources>
+    <color name="vozo_bg">#0B0B10</color>
+    <color name="vozo_surface">#161622</color>
+    <color name="vozo_primary">#D946EF</color>
+    <color name="vozo_secondary">#8B5CF6</color>
+    <color name="vozo_text">#F8FAFC</color>
+    <color name="vozo_text_muted">#94A3B8</color>
+</resources>

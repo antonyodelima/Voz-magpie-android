@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.VozoMagpie" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/vozo_bg</item>
+        <item name="android:navigationBarColor">@color/vozo_bg</item>
+        <item name="android:windowBackground">@color/vozo_bg</item>
+    </style>
+</resources>
