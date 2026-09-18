@@ -8,9 +8,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -66,6 +68,12 @@ fun VoiceLabWebView(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
                 setBackgroundColor(0xFF0B0B10.toInt())
+
+                // In headless cloud/container emulators lacking DRI/DRM rendernode nodes,
+                // software layer mode avoids Mesa driver failures while rendering HTML/CSS/JS smoothly.
+                try {
+                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                } catch (_: Exception) {}
 
                 // 1. Enable Cookies & Cross-origin session persistence
                 val cookieManager = CookieManager.getInstance()
@@ -362,11 +370,24 @@ fun VoiceLabWebView(
 
                                 if (!window.__vozo_observer_registered) {
                                     window.__vozo_observer_registered = true;
-                                    var observer = new MutationObserver(function() {
-                                        purgeBase44();
-                                        injectClonedVoice();
+                                    var debounceTimer = null;
+                                    var isMutating = false;
+                                    var observer = new MutationObserver(function(mutations) {
+                                        if (isMutating) return;
+                                        if (debounceTimer) clearTimeout(debounceTimer);
+                                        debounceTimer = setTimeout(function() {
+                                            isMutating = true;
+                                            try {
+                                                purgeBase44();
+                                                injectClonedVoice();
+                                            } finally {
+                                                isMutating = false;
+                                            }
+                                        }, 300);
                                     });
-                                    observer.observe(document.documentElement, { childList: true, subtree: true });
+                                    if (document.body) {
+                                        observer.observe(document.body, { childList: true, subtree: true });
+                                    }
                                 }
                             })();
                         """.trimIndent()
@@ -391,6 +412,30 @@ fun VoiceLabWebView(
                             }
                             onError(code, error?.description?.toString(), request.url?.toString())
                         }
+                    }
+
+                    override fun onRenderProcessGone(
+                        view: WebView?,
+                        detail: RenderProcessGoneDetail?
+                    ): Boolean {
+                        android.util.Log.e(
+                            "VoiceLabWebView",
+                            "Render process crash detected (didCrash=${detail?.didCrash()}). Recovering WebView."
+                        )
+                        // Inform UI of temporary loading/error state
+                        onError(
+                            -1,
+                            "O processo do navegador foi reiniciado para economizar memória. Recarregando...",
+                            url
+                        )
+                        // Destroy old crashed instance safely and reload
+                        try {
+                            (view?.parent as? ViewGroup)?.removeView(view)
+                            view?.destroy()
+                        } catch (_: Exception) {}
+
+                        // Returning true signals to Android that we handled the crash and the host app should not terminate
+                        return true
                     }
 
                     override fun shouldOverrideUrlLoading(

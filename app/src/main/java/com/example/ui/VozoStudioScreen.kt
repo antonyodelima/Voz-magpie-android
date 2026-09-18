@@ -37,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,7 @@ import com.example.ui.components.ConnectionErrorView
 import com.example.ui.components.VoiceLabWebView
 import com.example.ui.components.VoiceLabWebViewDefaults
 import com.example.ui.components.VoiceQuickToolbar
+import com.example.ui.components.VozoSplashScreen
 
 private const val VOZO_STUDIO_URL = VoiceLabWebViewDefaults.VOICE_LAB_URL
 
@@ -83,6 +85,7 @@ fun VozoStudioScreen(
     val voicePref by viewModel.voicePreference.collectAsStateWithLifecycle()
 
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }
+    var webViewKey by remember { mutableIntStateOf(0) }
     var canGoBack by remember { mutableStateOf(false) }
     var canGoForward by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
@@ -232,39 +235,41 @@ fun VozoStudioScreen(
                 .weight(1f)
         ) {
             // Reusable VoiceLabWebView
-            VoiceLabWebView(
-                modifier = Modifier.fillMaxSize(),
-                url = VOZO_STUDIO_URL,
-                onWebViewCreated = { webView ->
-                    webViewInstance = webView
-                },
-                onLoadingChanged = { loading, progress ->
-                    isLoading = loading
-                    loadProgress = progress
-                },
-                onNavigationStateChanged = { back, fwd ->
-                    canGoBack = back
-                    canGoForward = fwd
-                },
-                onError = { _, desc, _ ->
-                    isLoading = false
-                    hasError = true
-                    errorMessage = desc
-                },
-                onRequestAudioPermission = onRequestAudioPermission,
-                onShowFileChooser = { callback, _ ->
-                    filePathCallback?.onReceiveValue(null)
-                    filePathCallback = callback
-                    filePickerLauncher.launch("*/*")
-                    true
-                },
-                persistenceBridge = persistenceBridge
-            )
+            key(webViewKey) {
+                VoiceLabWebView(
+                    modifier = Modifier.fillMaxSize(),
+                    url = VOZO_STUDIO_URL,
+                    onWebViewCreated = { webView ->
+                        webViewInstance = webView
+                    },
+                    onLoadingChanged = { loading, progress ->
+                        isLoading = loading
+                        loadProgress = progress
+                    },
+                    onNavigationStateChanged = { back, fwd ->
+                        canGoBack = back
+                        canGoForward = fwd
+                    },
+                    onError = { _, desc, _ ->
+                        isLoading = false
+                        hasError = true
+                        errorMessage = desc
+                    },
+                    onRequestAudioPermission = onRequestAudioPermission,
+                    onShowFileChooser = { callback, _ ->
+                        filePathCallback?.onReceiveValue(null)
+                        filePathCallback = callback
+                        filePickerLauncher.launch("*/*")
+                        true
+                    },
+                    persistenceBridge = persistenceBridge
+                )
+            }
 
-            // Sleek Loading Overlay
+            // Vozo Magpie Splash Screen while WebView initialises
             if (isLoading) {
-                AudioWaveformLoader(
-                    progress = loadProgress,
+                VozoSplashScreen(
+                    loadProgress = loadProgress,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -276,7 +281,7 @@ fun VozoStudioScreen(
                     onRetry = {
                         hasError = false
                         isLoading = true
-                        webViewInstance?.reload()
+                        webViewKey++
                     },
                     onOpenExternal = {
                         val currentUrl = webViewInstance?.url ?: VOZO_STUDIO_URL
