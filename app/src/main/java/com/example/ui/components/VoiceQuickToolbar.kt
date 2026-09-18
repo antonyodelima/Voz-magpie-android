@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -75,7 +76,8 @@ fun VoiceQuickToolbar(
     onRequestAudioPermission: (() -> Unit)? = null,
     activeVoiceName: String = "Minha Voz (Clone)",
     isLoggedIn: Boolean = false,
-    onClearAuth: () -> Unit = {}
+    onClearAuth: () -> Unit = {},
+    onNavigateToDashboard: (() -> Unit)? = null
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -259,6 +261,16 @@ fun VoiceQuickToolbar(
                                 if (isLoggedIn) {
                                     onClearAuth()
                                 }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Dashboard & Ajustes", color = VozoTextPrimary) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Tune, contentDescription = null, tint = VozoPrimary)
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onNavigateToDashboard?.invoke()
                             }
                         )
                         DropdownMenuItem(

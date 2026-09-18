@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.theme.VozoDarkBg
 import com.example.theme.VozoMagpieTheme
-import com.example.ui.VozoStudioScreen
+import com.example.ui.MainAppContainer
 
 class MainActivity : ComponentActivity() {
 
@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = VozoDarkBg
                 ) {
-                    VozoStudioScreen(
+                    MainAppContainer(
                         hasMicPermission = hasMicPermission,
                         onRequestAudioPermission = { callback ->
                             requestMicrophonePermission(callback)
