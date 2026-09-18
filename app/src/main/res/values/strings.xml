@@ -11,4 +11,7 @@
     <string name="nav_reload">Reload</string>
     <string name="nav_home">Home</string>
     <string name="audio_permission_rationale">Microphone permission is needed to record voice samples in the studio.</string>
+    <string name="mic_permission_granted">Microphone access granted</string>
+    <string name="mic_permission_request">Enable Microphone</string>
+    <string name="mic_permission_banner_text">Microphone access is disabled. Enable it to record and process voice.</string>
 </resources>

@@ -16,14 +16,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
@@ -51,7 +53,9 @@ import com.example.theme.VozoAccent
 import com.example.theme.VozoDarkBg
 import com.example.theme.VozoDarkSurface
 import com.example.theme.VozoDarkSurfaceVariant
+import com.example.theme.VozoError
 import com.example.theme.VozoPrimary
+import com.example.theme.VozoSuccess
 import com.example.theme.VozoTextMuted
 import com.example.theme.VozoTextPrimary
 import com.example.theme.VozoTextSecondary
@@ -66,7 +70,12 @@ fun VoiceQuickToolbar(
     onHome: () -> Unit,
     onOpenBrowser: () -> Unit,
     onShare: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hasMicPermission: Boolean = true,
+    onRequestAudioPermission: (() -> Unit)? = null,
+    activeVoiceName: String = "Minha Voz (Clone)",
+    isLoggedIn: Boolean = false,
+    onClearAuth: () -> Unit = {}
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -93,12 +102,12 @@ fun VoiceQuickToolbar(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(VozoPrimary),
+                        .background(if (hasMicPermission) VozoPrimary else VozoError),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = null,
+                        imageVector = if (hasMicPermission) Icons.Default.Mic else Icons.Default.MicOff,
+                        contentDescription = if (hasMicPermission) "Microphone Active" else "Microphone Disabled",
                         tint = VozoDarkBg,
                         modifier = Modifier.size(14.dp)
                     )
@@ -118,6 +127,20 @@ fun VoiceQuickToolbar(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (!hasMicPermission && onRequestAudioPermission != null) {
+                    IconButton(
+                        onClick = onRequestAudioPermission,
+                        modifier = Modifier.testTag("btn_mic_permission")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MicOff,
+                            contentDescription = stringResource(R.string.mic_permission_request),
+                            tint = VozoError,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
                 IconButton(
                     onClick = onBack,
                     enabled = canGoBack,
@@ -186,6 +209,58 @@ fun VoiceQuickToolbar(
                         onDismissRequest = { menuExpanded = false },
                         modifier = Modifier.background(VozoDarkSurfaceVariant)
                     ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (hasMicPermission) stringResource(R.string.mic_permission_granted)
+                                    else stringResource(R.string.mic_permission_request),
+                                    color = VozoTextPrimary
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    if (hasMicPermission) Icons.Default.Mic else Icons.Default.MicOff,
+                                    contentDescription = null,
+                                    tint = if (hasMicPermission) VozoSuccess else VozoError
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                if (!hasMicPermission) {
+                                    onRequestAudioPermission?.invoke()
+                                }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Voz Salva: $activeVoiceName", color = VozoTextPrimary, maxLines = 1) },
+                            leadingIcon = {
+                                Icon(Icons.Default.RecordVoiceOver, contentDescription = null, tint = VozoAccent)
+                            },
+                            onClick = {
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (isLoggedIn) "Sessão: Conectada" else "Sessão: Convidado / Anônimo",
+                                    color = if (isLoggedIn) VozoSuccess else VozoTextSecondary
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.AccountCircle,
+                                    contentDescription = null,
+                                    tint = if (isLoggedIn) VozoSuccess else VozoTextSecondary
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                if (isLoggedIn) {
+                                    onClearAuth()
+                                }
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Open in Browser", color = VozoTextPrimary) },
                             leadingIcon = {
